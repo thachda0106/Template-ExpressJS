@@ -1,0 +1,60 @@
+version: '3.1'
+services:
+  app:
+    image: ecommerce-apis
+    env_file:
+      - .env
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      no_cache: true
+    restart: always
+    ports:
+      - "3000:3000"
+    expose:
+      - 3000
+    depends_on:
+      - mysql
+    networks:
+      - db-networks
+    develop:
+      watch:
+        - action: sync
+          path: ./
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: package.json
+        - action: sync+restart
+          path: ./.env
+          target: /app/.env
+        - action: rebuild
+          path: docker-compose.yaml
+  mysql:
+    image: mysql
+    container_name: mysql
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3307:3306"
+    expose:
+      - 3307
+      - 3306
+    volumes:
+      - ./database.sql:/docker-entrypoint-initdb.d/database.sql
+    networks:
+      - db-networks
+  adminer:
+      image: adminer
+      container_name: adminer
+      restart: always
+      ports:
+        - 8080:8080
+      expose:
+      - 8080
+      networks:
+        - db-networks
+networks:
+  db-networks:
